@@ -33,6 +33,7 @@ import type {
 import { Spacing } from '../theme/spacing';
 import { BackupScreen } from '@/screens/main/BackupScreen';
 import { BusinessConfigScreen } from '@/screens/main/BusinessConfigScreen';
+import { NotificationsConfigScreen } from '@/screens/main/NotificationsConfigScreen';
 
 const Tab           = createBottomTabNavigator<MainTabParamList>();
 const ProdStack     = createNativeStackNavigator<ProductsStackParamList>();
@@ -87,7 +88,8 @@ function SettingsStackNavigator() {
       <SettingsStack.Screen name="InventoryAdjustment" component={InventoryAdjustmentScreen} />
       <SettingsStack.Screen name="AdjustmentHistory"  component={AdjustmentHistoryScreen} />
       <SettingsStack.Screen name="Backup"             component={BackupScreen} />
-      <SettingsStack.Screen name="BusinessConfig" component={BusinessConfigScreen} />
+      <SettingsStack.Screen name="BusinessConfig"     component={BusinessConfigScreen} />
+      <SettingsStack.Screen name="NotificationsConfig" component={NotificationsConfigScreen} />
     </SettingsStack.Navigator>
   );
 }
