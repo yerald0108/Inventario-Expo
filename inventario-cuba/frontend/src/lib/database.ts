@@ -237,6 +237,30 @@ async function createTables(): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_adjustments_created ON inventory_adjustments(created_at)`
   );
 
+  // ── Configuración del negocio ────────────────────────────────────────
+  await execSQL(`
+    CREATE TABLE IF NOT EXISTS business_config (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
+
+  // Insertar valores por defecto si no existen
+  await execSQL(`
+    INSERT OR IGNORE INTO business_config (key, value) VALUES
+      ('businessName',    'Mi Negocio'),
+      ('currency',        'CUP'),
+      ('currencySymbol',  '$'),
+      ('taxPercent',      '0'),
+      ('address',         ''),
+      ('phone',           ''),
+      ('openTime',        '08:00'),
+      ('closeTime',       '20:00'),
+      ('defaultCategory', 'general'),
+      ('lowStockAlert',   '2'),
+      ('receiptFooter',   '')
+  `);
+
   // ── Índices ───────────────────────────────────────────────────────────
   await execSQL(`CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)`);
   await execSQL(`CREATE INDEX IF NOT EXISTS idx_products_sync     ON products(sync_status)`);

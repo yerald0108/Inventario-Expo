@@ -15,8 +15,7 @@ import {
   cleanupQueue,
   type QueuedOperation,
 } from '../lib/syncQueueRepository';
-
-export type { QueuedOperation };
+export type { QueuedOperation } from '../lib/syncQueueRepository';
 
 // Listeners para actualizar la UI
 type QueueListener = (ops: QueuedOperation[]) => void;

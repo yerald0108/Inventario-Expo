@@ -9,9 +9,9 @@ import {
   processSyncQueue,
   subscribeSyncQueue,
   retryFailedOperations,
-  getSyncStats,
-  type SyncOperation,
 } from '../services/syncService';
+import type { QueuedOperation as SyncOperation } from '../lib/syncQueueRepository';
+import { getQueueStats } from '../lib/syncQueueRepository'
 
 interface SyncState {
   // Estado de red
@@ -106,11 +106,13 @@ export const useSyncStore = create<SyncState>((set, get) => ({
    */
   initQueueListener: () => {
     return subscribeSyncQueue((queue) => {
-      const stats = getSyncStats();
-      set({
-        queue,
-        pendingCount: stats.pending,
-        errorCount:   stats.error,
+      // Obtener stats de forma asíncrona correctamente
+      getQueueStats().then(stats => {
+        set({
+          queue,
+          pendingCount: stats.pending,
+          errorCount:   stats.error,
+        });
       });
     });
   },

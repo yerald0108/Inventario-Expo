@@ -12,11 +12,15 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 
-import { AppLightTheme, AppDarkTheme } from './src/theme/paperTheme';
-import { initializeDatabase }          from './src/lib/database';
-import { RootNavigator }               from './src/navigation/RootNavigator';
-import { ErrorBoundary }               from './src/components/ErrorBoundary';
-import { Colors }                      from './src/theme/colors';
+import { AppLightTheme, AppDarkTheme }         from './src/theme/paperTheme';
+import { initializeDatabase }                  from './src/lib/database';
+import { RootNavigator }                       from './src/navigation/RootNavigator';
+import { ErrorBoundary }                       from './src/components/ErrorBoundary';
+import { Colors }                              from './src/theme/colors';
+import {
+  configureNotifications,
+  requestNotificationPermissions,
+} from './src/services/notificationService';
 
 // Suprimir warnings conocidos de librerías externas
 LogBox.ignoreLogs([
@@ -43,7 +47,15 @@ export default function App() {
           Inter_600SemiBold,
           Inter_700Bold,
         });
+
         await initializeDatabase();
+
+        // Configurar sistema de notificaciones
+        configureNotifications();
+
+        // Solicitar permisos de notificaciones (no bloquea si el usuario deniega)
+        await requestNotificationPermissions();
+
         setAppReady(true);
       } catch (error) {
         console.error('[App] Error al inicializar:', error);

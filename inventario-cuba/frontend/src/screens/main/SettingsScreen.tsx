@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { useAuthStore }  from '../../store/authStore';
 import { useSyncStore }  from '../../store/syncStore';
+import { useBusinessConfigStore } from '../../store/businessConfigStore';
 import { useNetwork }    from '../../hooks/useNetwork';
 import { AppCard }       from '../../components/AppCard';
 import { AppButton }     from '../../components/AppButton';
@@ -18,13 +19,16 @@ export function SettingsScreen() {
   const theme      = useTheme<AppTheme>();
   const insets     = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { isOfflineSession, refreshToken } = useAuthStore();
-
-  const { user, logout }                         = useAuthStore();
+  const { user, logout, refreshToken, isOfflineSession } = useAuthStore();
   const { isOnline, isSyncing, pendingCount,
           errorCount, lastSyncAt, syncNow,
           initQueueListener, setOnlineStatus }   = useSyncStore();
   const network                                  = useNetwork();
+  const { config: businessConfig, loadConfig } = useBusinessConfigStore();
+
+  useEffect(() => {
+  loadConfig();
+}, []);
 
   useEffect(() => {
     const unsubscribe = initQueueListener();
@@ -82,11 +86,32 @@ export function SettingsScreen() {
       color:   theme.colors.onSurfaceVariant,
     },
     {
+      icon:    'bell-outline',
+      label:   'Notificaciones',
+      desc:    'Alertas de stock y recordatorios',
+      onPress: () => navigation.navigate('NotificationsConfig'),
+      color:   theme.colors.onSurfaceVariant,
+    },
+    {
       icon:    'cloud-sync',
       label:   'Sincronización',
       desc:    `${pendingCount} pendiente(s)`,
       onPress: () => navigation.navigate('Sync'),
       color:   pendingCount > 0 ? theme.custom.sync.pending : theme.colors.onSurfaceVariant,
+    },
+    {
+      icon:    'database-export',
+      label:   'Copia de seguridad',
+      desc:    'Exportar datos a CSV y PDF',
+      onPress: () => navigation.navigate('Backup'),
+      color:   theme.colors.onSurfaceVariant,
+    },
+    {
+      icon:    'store-edit-outline',
+      label:   'Configuración del negocio',
+      desc:    businessConfig.businessName ?? 'Nombre, moneda, horario',
+      onPress: () => navigation.navigate('BusinessConfig'),
+      color:   theme.colors.onSurfaceVariant,
     },
     {
       icon:    'account-circle-outline',

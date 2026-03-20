@@ -114,6 +114,9 @@ export type SettingsStackParamList = {
   Reports:             undefined;
   InventoryAdjustment: { productId?: string };
   AdjustmentHistory:   undefined;
+  Backup:              undefined;
+  BusinessConfig:      undefined;
+  NotificationsConfig:  undefined;
 };
 
 export type ProductsStackParamList = {
@@ -172,4 +175,19 @@ export interface InventoryAdjustment {
   note:        string | null;
   syncStatus:  'pending' | 'synced' | 'error';
   createdAt:   string;
+}
+
+// ─── Configuración del negocio ────────────────────────────────────────────────
+export interface BusinessConfig {
+  businessName:   string;
+  currency:       string;
+  currencySymbol: string;
+  taxPercent:     number;
+  address:        string | null;
+  phone:          string | null;
+  openTime:       string;
+  closeTime:      string;
+  defaultCategory: string;
+  lowStockAlert:  number;
+  receiptFooter:  string | null;
 }

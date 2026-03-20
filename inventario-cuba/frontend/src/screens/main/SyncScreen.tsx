@@ -21,7 +21,7 @@ import { AppButton }     from '../../components/AppButton';
 import { AppCard }       from '../../components/AppCard';
 import type { AppTheme } from '../../theme/paperTheme';
 import { Spacing }       from '../../theme/spacing';
-import type { SyncOperation } from '../../services/syncService';
+import type { QueuedOperation as SyncOperation } from '../../lib/syncQueueRepository';
 
 const OPERATION_LABELS: Record<SyncOperation['type'], string> = {
   create_product: 'Crear producto',
