@@ -1,0 +1,4 @@
+/* Requerido por NativeWind — solo para casos puntuales donde Paper no alcanza */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

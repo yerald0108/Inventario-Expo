@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  owner
+  cashier
+}
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         UserRole @default(owner)
+  businessName String?  @map("business_name")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  products     Product[]
+  sales        Sale[]
+  cashClosings CashClosing[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  price       Float   @default(0)
+  cost        Float   @default(0)
+  stock       Int     @default(0)
+  minStock    Int     @default(2) @map("min_stock")
+  category    String  @default("general")
+  barcode     String?
+  unit        String  @default("unidad")
+  isActive    Boolean @default(true) @map("is_active")
+  imageUri    String? @map("image_uri")
+
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id])
+  saleItems SaleItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([category])
+  @@index([name])
+  @@map("products")
+}
+
+model Sale {
+  id            String        @id @default(cuid())
+  total         Float         @default(0)
+  subtotal      Float         @default(0)
+  discount      Float         @default(0)
+  paymentMethod PaymentMethod @default(cash) @map("payment_method")
+  note          String?
+
+  cashierId String @map("cashier_id")
+  cashier   User   @relation(fields: [cashierId], references: [id])
+  items     SaleItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([cashierId])
+  @@index([createdAt])
+  @@map("sales")
+}
+
+model SaleItem {
+  id          String @id @default(cuid())
+  quantity    Int    @default(1)
+  price       Float
+  cost        Float  @default(0)
+  subtotal    Float
+  productName String @map("product_name")
+
+  saleId    String  @map("sale_id")
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([saleId])
+  @@index([productId])
+  @@map("sale_items")
+}
+
+model CashClosing {
+  id             String @id @default(cuid())
+  date           String
+  openingAmount  Float  @default(0) @map("opening_amount")
+  closingAmount  Float  @default(0) @map("closing_amount")
+  expectedAmount Float  @default(0) @map("expected_amount")
+  difference     Float  @default(0)
+  totalSales     Float  @default(0) @map("total_sales")
+  totalCash      Float  @default(0) @map("total_cash")
+  totalCard      Float  @default(0) @map("total_card")
+  totalTransfer  Float  @default(0) @map("total_transfer")
+  salesCount     Int    @default(0) @map("sales_count")
+  note           String?
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([date])
+  @@map("cash_closings")
+}
