@@ -15,6 +15,7 @@ import { SalesScreen }         from '../screens/main/SalesScreen';
 import { SaleDetailScreen }    from '../screens/main/SaleDetailScreen';
 import { SettingsScreen }      from '../screens/main/SettingsScreen';
 import { SyncScreen }          from '../screens/main/SyncScreen';
+
 import { ReportsScreen } from '../screens/main/ReportsScreen';
 import { VoidSaleScreen } from '../screens/main/VoidSaleScreen';
 import { CashClosingScreen }        from '../screens/main/CashClosingScreen';
@@ -34,6 +35,7 @@ import { Spacing } from '../theme/spacing';
 import { BackupScreen } from '@/screens/main/BackupScreen';
 import { BusinessConfigScreen } from '@/screens/main/BusinessConfigScreen';
 import { NotificationsConfigScreen } from '@/screens/main/NotificationsConfigScreen';
+import { ProfileScreen } from '@/screens/main/ProfileScreen';
 
 const Tab           = createBottomTabNavigator<MainTabParamList>();
 const ProdStack     = createNativeStackNavigator<ProductsStackParamList>();
@@ -90,6 +92,7 @@ function SettingsStackNavigator() {
       <SettingsStack.Screen name="Backup"             component={BackupScreen} />
       <SettingsStack.Screen name="BusinessConfig"     component={BusinessConfigScreen} />
       <SettingsStack.Screen name="NotificationsConfig" component={NotificationsConfigScreen} />
+      <SettingsStack.Screen name="Profile" component={ProfileScreen} />
     </SettingsStack.Navigator>
   );
 }

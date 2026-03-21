@@ -94,6 +94,7 @@ export type RootStackParamList = {
 export type AuthStackParamList = {
   Login:    undefined;
   Register: undefined;
+  ForgotPassword: undefined;
 };
 
 export type MainTabParamList = {
@@ -116,7 +117,8 @@ export type SettingsStackParamList = {
   AdjustmentHistory:   undefined;
   Backup:              undefined;
   BusinessConfig:      undefined;
-  NotificationsConfig:  undefined;
+  NotificationsConfig: undefined;
+  Profile:             undefined;
 };
 
 export type ProductsStackParamList = {

@@ -6,7 +6,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.137.1:3000'; // Cambiar por tu IP local
+const API_URL = 'http://192.168.157.10:3000'; // Cambiar por tu IP local
 
 // Para encontrar tu IP en Windows ejecuta: ipconfig
 // Busca "Dirección IPv4" en tu adaptador WiFi
@@ -75,7 +75,30 @@ export const authApi = {
 
   me: () => request<any>('/api/auth/me'),
 
-  // Dentro de authApi, agregar después de me():
+  updateProfile: (body: { name: string; businessName?: string }) =>
+  request<any>('/api/auth/profile', {
+    method: 'PATCH',
+    body:   JSON.stringify(body),
+  }),
+
+changePassword: (body: { currentPassword: string; newPassword: string }) =>
+  request<any>('/api/auth/change-password', {
+    method: 'PATCH',
+    body:   JSON.stringify(body),
+  }),
+
+forgotPassword: (email: string) =>
+  request<any>('/api/auth/forgot-password', {
+    method: 'POST',
+    body:   JSON.stringify({ email }),
+  }),
+
+resetPassword: (body: { email: string; code: string; newPassword: string }) =>
+  request<any>('/api/auth/reset-password', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  }),
+  
   registerCashier: (body: {
     name:     string;
     email:    string;

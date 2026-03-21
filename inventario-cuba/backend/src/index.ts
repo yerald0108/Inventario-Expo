@@ -4,15 +4,16 @@
  */
 
 import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
+import express    from 'express';
+import cors       from 'cors';
 import cookieParser from 'cookie-parser';
-import morgan from 'morgan';
+import morgan     from 'morgan';
 
 import authRoutes    from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import saleRoutes    from './routes/sale.routes';
-import { errorHandler } from './middleware/errorHandler';
+import { errorHandler }               from './middleware/errorHandler';
+import { apiLimiter, authLimiter }    from './middleware/rateLimiter';
 
 const app  = express();
 const PORT = process.env.PORT ?? 3000;
@@ -22,7 +23,7 @@ const PORT = process.env.PORT ?? 3000;
 // CORS — permitir peticiones desde el frontend Expo
 app.use(cors({
   origin:      process.env.CORS_ORIGIN ?? 'http://localhost:8081',
-  credentials: true, // Necesario para cookies
+  credentials: true,
 }));
 
 // Parsear JSON y cookies
@@ -35,12 +36,19 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// ─── Rate limiting global ─────────────────────────────────────────────────────
+
+// Aplicar límite general a todas las rutas /api
+app.use('/api', apiLimiter);
+
 // ─── Rutas ────────────────────────────────────────────────────────────────────
+
+// Auth con límite estricto en login y registro
 app.use('/api/auth',     authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sales',    saleRoutes);
 
-// Health check — para verificar que el servidor está vivo
+// Health check — sin rate limiting
 app.get('/health', (_req, res) => {
   res.json({
     status:    'ok',

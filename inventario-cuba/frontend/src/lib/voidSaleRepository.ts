@@ -35,9 +35,8 @@ function rowToVoidSale(row: any, items: VoidSaleItem[] = []): VoidSale {
 export async function insertVoidSale(
   voidSale: VoidSale
 ): Promise<void> {
-  await withTransaction(tx => {
-    // Insertar la anulación
-    tx.executeSql(
+  await withTransaction(async (db) => {
+    await db.runAsync(
       `INSERT INTO void_sales (id, sale_id, reason, total_voided, sync_status, created_at)
        VALUES (?, ?, ?, ?, 'pending', ?)`,
       [
@@ -49,9 +48,8 @@ export async function insertVoidSale(
       ]
     );
 
-    // Insertar cada item anulado
     for (const item of voidSale.items) {
-      tx.executeSql(
+      await db.runAsync(
         `INSERT INTO void_sale_items (
           id, void_sale_id, sale_item_id, product_id,
           product_name, quantity, price, subtotal
@@ -68,8 +66,7 @@ export async function insertVoidSale(
         ]
       );
 
-      // Restaurar stock del producto
-      tx.executeSql(
+      await db.runAsync(
         `UPDATE products
          SET stock = stock + ?, sync_status = 'pending', updated_at = ?
          WHERE id = ?`,
@@ -77,17 +74,13 @@ export async function insertVoidSale(
       );
     }
 
-    // Marcar la venta original como anulada parcialmente o totalmente
-    tx.executeSql(
+    await db.runAsync(
       `UPDATE sales SET sync_status = 'pending' WHERE id = ?`,
       [voidSale.saleId]
     );
   });
 }
 
-/**
- * Obtiene todas las anulaciones de una venta específica.
- */
 export async function getVoidSalesBySaleId(
   saleId: string
 ): Promise<VoidSale[]> {
@@ -107,14 +100,11 @@ export async function getVoidSalesBySaleId(
   return voidSales;
 }
 
-/**
- * Verifica si una venta ya fue anulada completamente.
- */
 export async function isSaleFullyVoided(saleId: string): Promise<boolean> {
-  const rows = await querySQL<{ total_voided: number }>(
+  const rows = await querySQL(
     `SELECT COALESCE(SUM(total_voided), 0) as total_voided
      FROM void_sales WHERE sale_id = ?`,
     [saleId]
   );
-  return (rows[0]?.total_voided ?? 0) > 0;
+  return ((rows[0] as any)?.total_voided ?? 0) > 0;
 }

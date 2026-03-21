@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '.prisma/client';
 
 declare global {
   var __prisma: PrismaClient | undefined;
@@ -7,10 +7,8 @@ declare global {
 function createPrismaClient(): PrismaClient {
   const { PrismaPg } = require('@prisma/adapter-pg');
   const { Pool }     = require('pg');
-
   const pool    = new Pool({ connectionString: process.env.DATABASE_URL });
   const adapter = new PrismaPg(pool);
-
   return new PrismaClient({ adapter } as any);
 }
 

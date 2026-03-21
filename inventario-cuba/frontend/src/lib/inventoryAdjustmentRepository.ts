@@ -15,7 +15,7 @@ function rowToAdjustment(row: any): InventoryAdjustment {
     quantity:      row.quantity,
     previousStock: row.previous_stock,
     newStock:      row.new_stock,
-    cost:          row.cost      ?? null,
+    cost:          row.cost       ?? null,
     totalCost:     row.total_cost ?? null,
     reason:        row.reason,
     note:          row.note ?? null,
@@ -31,9 +31,8 @@ function rowToAdjustment(row: any): InventoryAdjustment {
 export async function insertAdjustment(
   adjustment: InventoryAdjustment
 ): Promise<void> {
-  await withTransaction(tx => {
-    // Guardar el ajuste
-    tx.executeSql(
+  await withTransaction(async (db) => {
+    await db.runAsync(
       `INSERT INTO inventory_adjustments (
         id, product_id, product_name, type, quantity,
         previous_stock, new_stock, cost, total_cost,
@@ -55,17 +54,15 @@ export async function insertAdjustment(
       ]
     );
 
-    // Actualizar stock del producto
-    tx.executeSql(
+    await db.runAsync(
       `UPDATE products
        SET stock = ?, sync_status = 'pending', updated_at = ?
        WHERE id = ?`,
       [adjustment.newStock, adjustment.createdAt, adjustment.productId]
     );
 
-    // Si hay costo, actualizar el costo promedio del producto
     if (adjustment.cost !== null && adjustment.type === 'entrada') {
-      tx.executeSql(
+      await db.runAsync(
         `UPDATE products SET cost = ? WHERE id = ?`,
         [adjustment.cost, adjustment.productId]
       );
@@ -80,7 +77,7 @@ export async function getAdjustments(params?: {
   productId?: string;
   limit?:     number;
 }): Promise<InventoryAdjustment[]> {
-  let sql       = `SELECT * FROM inventory_adjustments WHERE 1=1`;
+  let sql           = `SELECT * FROM inventory_adjustments WHERE 1=1`;
   const args: any[] = [];
 
   if (params?.productId) {

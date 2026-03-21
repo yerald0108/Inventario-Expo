@@ -1,10 +1,12 @@
 /**
  * Controller de productos.
  * CRUD completo con validación y paginación.
+ * Completamente tipado con los tipos generados por Prisma.
  */
 
 import { Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { Prisma }   from '@prisma/client';
+import { prisma }   from '../lib/prisma';
 import type { AuthRequest, ApiResponse } from '../types';
 import {
   createProductSchema,
@@ -20,14 +22,14 @@ export async function getProducts(
   res: Response<ApiResponse>
 ): Promise<void> {
   const userId   = req.user!.id;
-  const search   = req.query.search as string | undefined;
+  const search   = req.query.search   as string | undefined;
   const category = req.query.category as string | undefined;
-  const page     = parseInt(req.query.page as string) || 1;
+  const page     = parseInt(req.query.page  as string) || 1;
   const limit    = parseInt(req.query.limit as string) || 50;
   const skip     = (page - 1) * limit;
 
-  // Construir filtros dinámicos
-  const where: any = {
+  // Construir filtros con tipos Prisma — sin any
+  const where: Prisma.ProductWhereInput = {
     userId,
     isActive: true,
     ...(search && {
@@ -118,7 +120,6 @@ export async function updateProduct(
 ): Promise<void> {
   const input = updateProductSchema.parse(req.body);
 
-  // Verificar que el producto pertenece al usuario
   const existing = await prisma.product.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
   });
@@ -163,7 +164,6 @@ export async function deleteProduct(
     return;
   }
 
-  // Soft delete — marcar como inactivo en lugar de eliminar
   await prisma.product.update({
     where: { id: req.params.id },
     data:  { isActive: false },
@@ -184,14 +184,14 @@ export async function getCategories(
   res: Response<ApiResponse>
 ): Promise<void> {
   const categories = await prisma.product.findMany({
-    where:   { userId: req.user!.id, isActive: true },
-    select:  { category: true },
+    where:    { userId: req.user!.id, isActive: true },
+    select:   { category: true },
     distinct: ['category'],
-    orderBy: { category: 'asc' },
+    orderBy:  { category: 'asc' },
   });
 
   res.json({
     success: true,
-    data: categories.map((c: { category: string }) => c.category),
+    data: categories.map(c => c.category),
   });
 }

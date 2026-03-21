@@ -1,70 +1,81 @@
 /**
- * Middleware de autenticación JWT.
- * Lee el token del header Authorization: Bearer <token>
- * o de la cookie 'access_token'.
+ * Middleware de autenticación.
+ * Verifica el JWT y valida que la sesión esté activa en la base de datos.
+ * Esto permite invalidar tokens remotamente (logout en todos los dispositivos).
  */
 
 import { Response, NextFunction } from 'express';
-import { verifyAccessToken } from '../lib/jwt';
-import type { AuthRequest } from '../types';
+import { verifyAccessToken }      from '../lib/jwt';
+import { validateSession }        from '../lib/sessions';
+import type { AuthRequest, ApiResponse, JwtPayload } from '../types';
 
-export function authMiddleware(
-  req: AuthRequest,
-  res: Response,
+/**
+ * Middleware principal de autenticación.
+ * 1. Extrae el token del header Authorization
+ * 2. Verifica la firma JWT
+ * 3. Valida que la sesión esté activa en la BD
+ */
+export async function authMiddleware(
+  req:  AuthRequest,
+  res:  Response<ApiResponse>,
   next: NextFunction
-): void {
-  try {
-    // Buscar token en header Authorization o en cookie
-    let token: string | undefined;
+): Promise<void> {
+  const authHeader = req.headers.authorization;
 
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
-    } else if (req.cookies?.access_token) {
-      token = req.cookies.access_token;
-    }
-
-    if (!token) {
-      res.status(401).json({
-        success: false,
-        error: 'No autenticado. Por favor inicia sesión.',
-      });
-      return;
-    }
-
-    // Verificar y decodificar el token
-    const payload = verifyAccessToken(token);
-
-    // Adjuntar usuario al request para uso en controllers
-    req.user = {
-      id:    payload.userId,
-      email: payload.email,
-      role:  payload.role,
-      name:  payload.name,
-    };
-
-    next();
-  } catch (error) {
+  if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({
       success: false,
-      error: 'Token inválido o expirado. Por favor inicia sesión de nuevo.',
+      error:   'Token de autenticación requerido.',
     });
+    return;
   }
+
+  const token = authHeader.split(' ')[1];
+
+  // Verificar firma JWT — verifyAccessToken lanza error si es inválido
+  let payload: JwtPayload;
+  try {
+    payload = verifyAccessToken(token);
+  } catch {
+    res.status(401).json({
+      success: false,
+      error:   'Token inválido o expirado.',
+    });
+    return;
+  }
+
+  // Verificar que la sesión esté activa en la BD
+  const sessionValid = await validateSession(token);
+  if (!sessionValid) {
+    res.status(401).json({
+      success: false,
+      error:   'Sesión inválida. Por favor inicia sesión nuevamente.',
+    });
+    return;
+  }
+
+  req.user = {
+    id:    payload.userId,
+    email: payload.email,
+    role:  payload.role,
+    name:  payload.name,
+  };
+
+  next();
 }
 
 /**
- * Middleware que requiere rol de owner (dueño).
- * Usar después de authMiddleware.
+ * Middleware que requiere rol de propietario.
  */
 export function requireOwner(
-  req: AuthRequest,
-  res: Response,
+  req:  AuthRequest,
+  res:  Response<ApiResponse>,
   next: NextFunction
 ): void {
   if (req.user?.role !== 'owner') {
     res.status(403).json({
       success: false,
-      error: 'Acceso denegado. Se requiere rol de propietario.',
+      error:   'Acceso restringido a propietarios.',
     });
     return;
   }

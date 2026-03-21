@@ -44,7 +44,7 @@ export function SettingsScreen() {
 
   const menuItems = [
     {
-      icon:    'package-variant-plus',
+      icon:    'package-variant-closed',
       label:   'Ajuste de inventario',
       desc:    'Entradas, salidas y correcciones',
       onPress: () => navigation.navigate('InventoryAdjustment', {}),
@@ -117,7 +117,7 @@ export function SettingsScreen() {
       icon:    'account-circle-outline',
       label:   'Perfil',
       desc:    user?.email ?? '',
-      onPress: () => {},
+      onPress: () => navigation.navigate('Profile'),
       color:   theme.colors.onSurfaceVariant,
     },
     {

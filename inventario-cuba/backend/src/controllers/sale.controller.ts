@@ -1,8 +1,28 @@
-import { Response } from 'express';
-import { prisma } from '../lib/prisma';
+/**
+ * Controller de ventas.
+ * Completamente tipado con los tipos generados por Prisma.
+ */
+
+import { Response }  from 'express';
+import { Prisma }    from '@prisma/client';
+import { prisma }    from '../lib/prisma';
 import type { AuthRequest, ApiResponse } from '../types';
 import { createSaleSchema } from '../validators/sale.validators';
 
+// ─── Tipos locales ────────────────────────────────────────────────────────────
+
+interface SaleItemInput {
+  productId:   string;
+  productName: string;
+  quantity:    number;
+  price:       number;
+  cost:        number;
+}
+
+/**
+ * POST /api/sales
+ * Crea una nueva venta con sus items en una transacción atómica.
+ */
 export async function createSale(
   req: AuthRequest,
   res: Response<ApiResponse>
@@ -10,56 +30,62 @@ export async function createSale(
   const input = createSaleSchema.parse(req.body);
 
   const subtotal = input.items.reduce(
-    (sum: number, item: any) => sum + item.price * item.quantity, 0
+    (sum: number, item: SaleItemInput) => sum + item.price * item.quantity,
+    0
   );
   const total = subtotal - input.discount;
 
-  const sale = await prisma.$transaction(async (tx: any) => {
-    for (const item of input.items) {
-      const product = await tx.product.findFirst({
-        where: { id: item.productId, userId: req.user!.id },
-      });
-      if (!product) {
-        throw new Error(`Producto ${item.productName} no encontrado.`);
+  const sale = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      // Verificar stock disponible para todos los items
+      for (const item of input.items) {
+        const product = await tx.product.findFirst({
+          where: { id: item.productId, userId: req.user!.id },
+        });
+        if (!product) {
+          throw new Error(`Producto ${item.productName} no encontrado.`);
+        }
+        if (product.stock < item.quantity) {
+          throw new Error(
+            `Stock insuficiente para "${product.name}". Disponible: ${product.stock}`
+          );
+        }
       }
-      if (product.stock < item.quantity) {
-        throw new Error(
-          `Stock insuficiente para "${product.name}". Disponible: ${product.stock}`
-        );
-      }
-    }
 
-    const newSale = await tx.sale.create({
-      data: {
-        total,
-        subtotal,
-        discount:      input.discount,
-        paymentMethod: input.paymentMethod as any,
-        note:          input.note,
-        cashierId:     req.user!.id,
-        items: {
-          create: input.items.map((item: any) => ({
-            productId:   item.productId,
-            productName: item.productName,
-            quantity:    item.quantity,
-            price:       item.price,
-            cost:        item.cost,
-            subtotal:    item.price * item.quantity,
-          })),
+      // Crear la venta con sus items
+      const newSale = await tx.sale.create({
+        data: {
+          total,
+          subtotal,
+          discount:      input.discount,
+          paymentMethod: input.paymentMethod as Prisma.EnumPaymentMethodFilter['equals'],
+          note:          input.note,
+          cashierId:     req.user!.id,
+          items: {
+            create: input.items.map((item: SaleItemInput) => ({
+              productId:   item.productId,
+              productName: item.productName,
+              quantity:    item.quantity,
+              price:       item.price,
+              cost:        item.cost,
+              subtotal:    item.price * item.quantity,
+            })),
+          },
         },
-      },
-      include: { items: true },
-    });
-
-    for (const item of input.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data:  { stock: { decrement: item.quantity } },
+        include: { items: true },
       });
-    }
 
-    return newSale;
-  });
+      // Decrementar stock de cada producto
+      for (const item of input.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data:  { stock: { decrement: item.quantity } },
+        });
+      }
+
+      return newSale;
+    }
+  );
 
   res.status(201).json({
     success: true,
@@ -68,17 +94,22 @@ export async function createSale(
   });
 }
 
+/**
+ * GET /api/sales
+ * Lista ventas del usuario con paginación y filtros de fecha.
+ */
 export async function getSales(
   req: AuthRequest,
   res: Response<ApiResponse>
 ): Promise<void> {
-  const page     = parseInt(req.query.page as string) || 1;
-  const limit    = parseInt(req.query.limit as string) || 20;
+  const page     = parseInt(req.query.page     as string) || 1;
+  const limit    = parseInt(req.query.limit    as string) || 20;
   const skip     = (page - 1) * limit;
   const dateFrom = req.query.dateFrom as string | undefined;
   const dateTo   = req.query.dateTo   as string | undefined;
 
-  const where: any = {
+  // Filtro tipado con Prisma.SaleWhereInput
+  const where: Prisma.SaleWhereInput = {
     cashierId: req.user!.id,
     ...(dateFrom || dateTo ? {
       createdAt: {
@@ -111,6 +142,10 @@ export async function getSales(
   });
 }
 
+/**
+ * GET /api/sales/:id
+ * Obtiene una venta por ID.
+ */
 export async function getSaleById(
   req: AuthRequest,
   res: Response<ApiResponse>
@@ -131,6 +166,10 @@ export async function getSaleById(
   res.json({ success: true, data: sale });
 }
 
+/**
+ * GET /api/sales/today
+ * Resumen de ventas del día actual.
+ */
 export async function getTodaySummary(
   req: AuthRequest,
   res: Response<ApiResponse>
@@ -147,13 +186,16 @@ export async function getTodaySummary(
     },
   });
 
-  const totalAmount   = sales.reduce((sum: number, s: any) => sum + s.total, 0);
-  const totalCash     = sales.filter((s: any) => s.paymentMethod === 'cash')
-                             .reduce((sum: number, s: any) => sum + s.total, 0);
-  const totalCard     = sales.filter((s: any) => s.paymentMethod === 'card')
-                             .reduce((sum: number, s: any) => sum + s.total, 0);
-  const totalTransfer = sales.filter((s: any) => s.paymentMethod === 'transfer')
-                             .reduce((sum: number, s: any) => sum + s.total, 0);
+  const totalAmount   = sales.reduce((sum, s) => sum + s.total,    0);
+  const totalCash     = sales
+    .filter(s => s.paymentMethod === 'cash')
+    .reduce((sum, s) => sum + s.total, 0);
+  const totalCard     = sales
+    .filter(s => s.paymentMethod === 'card')
+    .reduce((sum, s) => sum + s.total, 0);
+  const totalTransfer = sales
+    .filter(s => s.paymentMethod === 'transfer')
+    .reduce((sum, s) => sum + s.total, 0);
 
   res.json({
     success: true,

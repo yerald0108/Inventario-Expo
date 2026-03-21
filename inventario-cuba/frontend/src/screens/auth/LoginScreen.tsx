@@ -1,7 +1,6 @@
 /**
  * Pantalla de inicio de sesión.
  * Validación en tiempo real con React Hook Form + Zod.
- * Feedback visual de errores y estado de carga.
  */
 
 import React, { useRef } from 'react';
@@ -11,7 +10,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TextInput as RNTextInput,
 } from 'react-native';
 import { Text, useTheme, Snackbar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,27 +20,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useAuthStore } from '../../store/authStore';
-import { AppButton } from '../../components/AppButton';
-import { AppInput } from '../../components/AppInput';
+import { AppButton }    from '../../components/AppButton';
+import { AppInput }     from '../../components/AppInput';
 import type { AppTheme } from '../../theme/paperTheme';
-import { Spacing } from '../../theme/spacing';
+import { Spacing }       from '../../theme/spacing';
 import type { AuthStackParamList } from '../../types';
 
-// Schema de validación
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'El email es requerido')
-    .email('Ingresa un email válido'),
-  password: z
-    .string()
-    .min(1, 'La contraseña es requerida')
-    .min(6, 'Mínimo 6 caracteres'),
+  email:    z.string().min(1, 'El email es requerido').email('Ingresa un email válido'),
+  password: z.string().min(1, 'La contraseña es requerida').min(6, 'Mínimo 6 caracteres'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
-
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+type Props     = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
   const theme   = useTheme<AppTheme>();
@@ -56,7 +46,7 @@ export function LoginScreen({ navigation }: Props) {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+    resolver:      zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
@@ -76,7 +66,10 @@ export function LoginScreen({ navigation }: Props) {
       <ScrollView
         contentContainerStyle={[
           styles.container,
-          { paddingTop: insets.top + Spacing['2xl'], paddingBottom: insets.bottom + Spacing.xl },
+          {
+            paddingTop:    insets.top + Spacing['2xl'],
+            paddingBottom: insets.bottom + Spacing.xl,
+          },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -138,7 +131,7 @@ export function LoginScreen({ navigation }: Props) {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.password?.message}
-                secureText={true}
+                secureText
                 icon="lock-outline"
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit(onSubmit)}
@@ -153,6 +146,12 @@ export function LoginScreen({ navigation }: Props) {
               loading={isLoading}
               icon="login"
               size="large"
+            />
+            <AppButton
+              label="¿Olvidaste tu contraseña?"
+              onPress={() => navigation.navigate('ForgotPassword')}
+              variant="text"
+              size="small"
             />
           </View>
         </View>
@@ -175,7 +174,6 @@ export function LoginScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Snackbar de error */}
       <Snackbar
         visible={!!error}
         onDismiss={clearError}
@@ -192,9 +190,9 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex:      { flex: 1 },
   container: {
-    flexGrow:       1,
+    flexGrow:          1,
     paddingHorizontal: Spacing.base,
   },
   header: {
@@ -209,25 +207,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom:   Spacing.base,
   },
-  title: {
-    fontWeight:   '700',
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    textAlign: 'center',
-  },
-  form: {
-    gap: Spacing.xs,
-  },
-  buttonContainer: {
-    marginTop: Spacing.base,
-  },
+  title:    { fontWeight: '700', marginBottom: Spacing.xs },
+  subtitle: { textAlign: 'center' },
+  form:     { gap: Spacing.xs },
+  buttonContainer: { marginTop: Spacing.base, gap: Spacing.xs },
   footer: {
     flexDirection:  'row',
     justifyContent: 'center',
     marginTop:      Spacing.xl,
   },
-  link: {
-    fontWeight: '600',
-  },
+  link: { fontWeight: '600' },
 });

@@ -211,7 +211,7 @@ export function ProductDetailScreen({ navigation, route }: Props) {
             params: { productId: product.id },
           })}
           variant="outlined"
-          icon="package-variant-plus"
+          icon="package-variant-closed"
           size="large"
         />
       </ScrollView>

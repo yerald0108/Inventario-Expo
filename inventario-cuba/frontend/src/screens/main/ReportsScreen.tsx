@@ -296,7 +296,7 @@ export function ReportsScreen() {
             color={theme.custom.success.main}
           />
           <KPICard
-            icon="receipt-text-outline"
+            icon="receipt-outline"
             label="Ventas"
             value={String(summary?.totalSales ?? 0)}
             color={theme.colors.secondary}

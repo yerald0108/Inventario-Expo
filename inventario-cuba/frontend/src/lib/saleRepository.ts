@@ -32,7 +32,6 @@ function rowToSale(row: any, items: SaleItem[] = []): Sale {
   };
 }
 
-/** Obtiene los items de una venta. */
 export async function getSaleItems(saleId: string): Promise<SaleItem[]> {
   const rows = await querySQL(
     `SELECT * FROM sale_items WHERE sale_id = ?`, [saleId]
@@ -40,7 +39,6 @@ export async function getSaleItems(saleId: string): Promise<SaleItem[]> {
   return rows.map(rowToSaleItem);
 }
 
-/** Obtiene ventas con filtros de fecha y paginación. */
 export async function getSales(params: {
   dateFrom?: string | null;
   dateTo?:   string | null;
@@ -51,7 +49,7 @@ export async function getSales(params: {
   const limit = params.limit ?? 20;
   const skip  = (page - 1) * limit;
 
-  let sql       = `SELECT * FROM sales WHERE 1=1`;
+  let sql           = `SELECT * FROM sales WHERE 1=1`;
   const args: any[] = [];
 
   if (params.dateFrom) {
@@ -76,7 +74,6 @@ export async function getSales(params: {
   return sales;
 }
 
-/** Resumen de ventas del día actual. */
 export async function getTodaySummary(): Promise<{
   salesCount:    number;
   totalAmount:   number;
@@ -89,7 +86,7 @@ export async function getTodaySummary(): Promise<{
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const rows = await querySQL<any>(
+  const rows = await querySQL(
     `SELECT
        COUNT(*) as cnt,
        COALESCE(SUM(total), 0) as total,
@@ -101,7 +98,7 @@ export async function getTodaySummary(): Promise<{
     [today.toISOString(), tomorrow.toISOString()]
   );
 
-  const row = rows[0];
+  const row = rows[0] as any;
   return {
     salesCount:    row?.cnt      ?? 0,
     totalAmount:   row?.total    ?? 0,
@@ -113,18 +110,16 @@ export async function getTodaySummary(): Promise<{
 
 /**
  * Inserta una venta completa con sus items en una transacción atómica.
- * Si algo falla, nada se guarda.
  */
 export async function insertSaleWithItems(
   sale: Omit<Sale, 'items'> & { items: SaleItem[] }
 ): Promise<void> {
-  await withTransaction(tx => {
-    // Insertar la venta
-    tx.executeSql(
+  await withTransaction(async (db) => {
+    await db.runAsync(
       `INSERT INTO sales (
-        id, server_id, total, subtotal, discount,
+        id, total, subtotal, discount,
         payment_method, note, sync_status, created_at, updated_at
-      ) VALUES (?, NULL, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       [
         sale.id,
         sale.total,
@@ -137,9 +132,8 @@ export async function insertSaleWithItems(
       ]
     );
 
-    // Insertar cada item
     for (const item of sale.items) {
-      tx.executeSql(
+      await db.runAsync(
         `INSERT INTO sale_items (
           id, sale_id, product_id, product_name,
           price, cost, quantity, subtotal, created_at
@@ -160,18 +154,16 @@ export async function insertSaleWithItems(
   });
 }
 
-/** Marca una venta como sincronizada con el servidor. */
 export async function markSaleSynced(
   localId:  string,
   serverId: string
 ): Promise<void> {
   await execSQL(
-    `UPDATE sales SET sync_status = 'synced', server_id = ? WHERE id = ?`,
-    [serverId, localId]
+    `UPDATE sales SET sync_status = 'synced' WHERE id = ?`,
+    [localId]
   );
 }
 
-/** Obtiene todas las ventas pendientes de sincronizar. */
 export async function getPendingSales(): Promise<Sale[]> {
   const rows = await querySQL(
     `SELECT * FROM sales WHERE sync_status = 'pending' ORDER BY created_at ASC`

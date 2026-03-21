@@ -81,7 +81,7 @@ export function BackupScreen({ navigation }: Props) {
     },
     {
       key:         'sales_csv',
-      icon:        'receipt-text-outline',
+      icon:        'receipt-outline',
       label:       'Exportar ventas',
       description: 'Historial de ventas con totales y métodos de pago',
       format:      'CSV',
