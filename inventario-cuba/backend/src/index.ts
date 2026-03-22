@@ -12,8 +12,11 @@ import morgan     from 'morgan';
 import authRoutes    from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import saleRoutes    from './routes/sale.routes';
+import cashClosingRoutes        from './routes/cashClosing.routes';
+import voidSaleRoutes           from './routes/voidSale.routes';
+import inventoryAdjustmentRoutes from './routes/inventoryAdjustment.routes';
 import { errorHandler }               from './middleware/errorHandler';
-import { apiLimiter, authLimiter }    from './middleware/rateLimiter';
+import { apiLimiter }    from './middleware/rateLimiter';
 
 const app  = express();
 const PORT = process.env.PORT ?? 3000;
@@ -47,6 +50,10 @@ app.use('/api', apiLimiter);
 app.use('/api/auth',     authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sales',    saleRoutes);
+
+app.use('/api/cash-closings',         cashClosingRoutes);
+app.use('/api/void-sales',            voidSaleRoutes);
+app.use('/api/inventory-adjustments', inventoryAdjustmentRoutes);
 
 // Health check — sin rate limiting
 app.get('/health', (_req, res) => {

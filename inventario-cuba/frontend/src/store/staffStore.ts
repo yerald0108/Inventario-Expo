@@ -37,20 +37,18 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   loadStaff: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authApi.me();
-      // Por ahora cargamos solo el perfil del dueño
-      // En una versión futura se cargará la lista completa del negocio
-      const owner = response.data;
+      const response = await authApi.getStaff();
+      const staffList = response.data ?? [];
       set({
-        staff: [{
-          id:           owner.id,
-          name:         owner.name,
-          email:        owner.email,
-          role:         owner.role,
-          businessName: owner.businessName ?? null,
-          isActive:     true,
-          createdAt:    owner.createdAt,
-        }],
+        staff: staffList.map((u: any) => ({
+          id:           u.id,
+          name:         u.name,
+          email:        u.email,
+          role:         u.role,
+          businessName: u.businessName ?? null,
+          isActive:     u.isActive ?? true,
+          createdAt:    u.createdAt,
+        })),
         isLoading: false,
       });
     } catch (error) {
@@ -59,7 +57,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         error: error instanceof Error ? error.message : 'Error al cargar empleados',
       });
     }
-  },
+  },  
 
   /**
    * Crea un nuevo cajero en el servidor.

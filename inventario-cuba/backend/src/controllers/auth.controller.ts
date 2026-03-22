@@ -404,9 +404,7 @@ export async function changePassword(
 
 /**
  * POST /api/auth/forgot-password
- * Inicia el flujo de recuperación de contraseña.
- * Genera un código de 6 dígitos válido por 15 minutos.
- * (En esta versión el código se devuelve en la respuesta para desarrollo)
+ * Genera un código de recuperación de 6 dígitos válido por 15 minutos.
  */
 export async function forgotPassword(
   req: AuthRequest,
@@ -432,30 +430,28 @@ export async function forgotPassword(
     return;
   }
 
+  // Invalidar tokens anteriores del mismo usuario
+  await prisma.passwordResetToken.updateMany({
+    where: { userId: user.id, used: false },
+    data:  { used: true },
+  });
+
   // Generar código de 6 dígitos
   const code      = Math.floor(100000 + Math.random() * 900000).toString();
+  const codeHash  = require('crypto')
+    .createHash('sha256').update(code).digest('hex');
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
-  // Guardar el código hasheado en la BD usando el campo businessName temporal
-  // En producción esto iría a una tabla reset_tokens
-  const codeHash = require('crypto')
-    .createHash('sha256').update(code).digest('hex');
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data:  {
-      // Almacenamos temporalmente como JSON en businessName
-      // En producción se usaría una tabla dedicada reset_tokens
-      businessName: JSON.stringify({
-        original:   user.businessName,
-        resetCode:  codeHash,
-        expiresAt:  expiresAt.toISOString(),
-      }),
+  await prisma.passwordResetToken.create({
+    data: {
+      userId:   user.id,
+      codeHash,
+      expiresAt,
+      used:     false,
     },
   });
 
-  // En producción aquí se enviaría un email/SMS
-  // En desarrollo devolvemos el código en la respuesta
+  // En producción aquí se enviaría email/SMS
   const isDev = process.env.NODE_ENV === 'development';
 
   res.json({
@@ -504,44 +500,38 @@ export async function resetPassword(
     return;
   }
 
-  // Leer datos del reset desde businessName
-  let resetData: any = null;
-  try {
-    const parsed = JSON.parse(user.businessName ?? '{}');
-    if (parsed.resetCode) resetData = parsed;
-  } catch {
-    // No hay datos de reset
-  }
-
-  if (!resetData) {
-    res.status(400).json({ success: false, error: 'Código inválido o expirado.' });
-    return;
-  }
-
-  // Verificar expiración
-  if (new Date() > new Date(resetData.expiresAt)) {
-    res.status(400).json({ success: false, error: 'El código ha expirado. Solicita uno nuevo.' });
-    return;
-  }
-
-  // Verificar código
-  const codeHash = require('crypto')
+  // Buscar token válido
+  const codeHash    = require('crypto')
     .createHash('sha256').update(code).digest('hex');
 
-  if (codeHash !== resetData.resetCode) {
-    res.status(400).json({ success: false, error: 'Código incorrecto.' });
+  const resetToken = await prisma.passwordResetToken.findFirst({
+    where: {
+      userId:   user.id,
+      codeHash,
+      used:     false,
+      expiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!resetToken) {
+    res.status(400).json({
+      success: false,
+      error: 'Código incorrecto o expirado. Solicita uno nuevo.',
+    });
     return;
   }
 
-  // Actualizar contraseña y restaurar businessName
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  // Marcar token como usado
+  await prisma.passwordResetToken.update({
+    where: { id: resetToken.id },
+    data:  { used: true },
+  });
 
+  // Actualizar contraseña
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({
     where: { id: user.id },
-    data:  {
-      password:     hashedPassword,
-      businessName: resetData.original ?? null,
-    },
+    data:  { password: hashedPassword },
   });
 
   // Invalidar todas las sesiones activas
@@ -550,5 +540,59 @@ export async function resetPassword(
   res.json({
     success: true,
     message: 'Contraseña restablecida. Por favor inicia sesión nuevamente.',
+  });
+}
+
+/**
+ * GET /api/auth/staff
+ * Lista todos los cajeros del negocio del propietario.
+ */
+export async function getStaff(
+  req: AuthRequest,
+  res: Response<ApiResponse>
+): Promise<void> {
+  // Buscar cajeros que comparten el mismo businessName que el owner
+  const owner = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+  });
+
+  if (!owner) {
+    res.status(404).json({ success: false, error: 'Usuario no encontrado.' });
+    return;
+  }
+
+  const staff = await prisma.user.findMany({
+    where: {
+      role:         'cashier',
+      businessName: owner.businessName,
+      isActive:     true,
+    },
+    select: {
+      id:           true,
+      name:         true,
+      email:        true,
+      role:         true,
+      businessName: true,
+      isActive:     true,
+      createdAt:    true,
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  // Incluir el owner en la lista
+  res.json({
+    success: true,
+    data: [
+      {
+        id:           owner.id,
+        name:         owner.name,
+        email:        owner.email,
+        role:         owner.role,
+        businessName: owner.businessName,
+        isActive:     owner.isActive,
+        createdAt:    owner.createdAt,
+      },
+      ...staff,
+    ],
   });
 }

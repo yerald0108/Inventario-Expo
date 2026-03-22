@@ -71,6 +71,7 @@ export interface CartItem {
 // ─── Cierre de caja ───────────────────────────────────────────────────────────
 export interface CashClosing {
   id:             string;
+  serverId:       string | null;
   date:           string;
   openingAmount:  number;
   closingAmount:  number;
@@ -82,6 +83,7 @@ export interface CashClosing {
   totalTransfer:  number;
   salesCount:     number;
   note:           string | null;
+  syncStatus:     'pending' | 'synced' | 'error';
   createdAt:      string;
 }
 

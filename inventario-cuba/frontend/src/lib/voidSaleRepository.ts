@@ -3,8 +3,9 @@
  * Soporta anulación total y parcial (por items).
  */
 
-import { execSQL, querySQL, withTransaction } from './database';
+import { querySQL, withTransaction } from './database';
 import type { VoidSale, VoidSaleItem } from '../types';
+import { enqueueOperation } from './syncQueueRepository';
 
 function rowToVoidSaleItem(row: any): VoidSaleItem {
   return {
@@ -47,6 +48,13 @@ export async function insertVoidSale(
         voidSale.createdAt,
       ]
     );
+
+    await enqueueOperation('create_void_sale', voidSale.id, {
+      saleId:      voidSale.saleId,
+      reason:      voidSale.reason,
+      totalVoided: voidSale.totalVoided,
+      items:       voidSale.items,
+    });
 
     for (const item of voidSale.items) {
       await db.runAsync(

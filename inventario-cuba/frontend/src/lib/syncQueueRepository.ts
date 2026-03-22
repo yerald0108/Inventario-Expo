@@ -7,7 +7,14 @@ import { execSQL, querySQL, querySQLOne } from './database';
 
 export type QueuedOperation = {
   id:           string;
-  type:         'create_product' | 'update_product' | 'delete_product' | 'create_sale';
+   type:
+    | 'create_product'
+    | 'update_product'
+    | 'delete_product'
+    | 'create_sale'
+    | 'create_void_sale'
+    | 'create_cash_closing'
+    | 'create_adjustment';
   entityId:     string;
   payload:      string; // JSON serializado
   status:       'pending' | 'syncing' | 'synced' | 'error';

@@ -152,6 +152,7 @@ export async function initializeDatabase(): Promise<void> {
     await database.runAsync(`
       CREATE TABLE IF NOT EXISTS cash_closings (
         id              TEXT PRIMARY KEY,
+        server_id       TEXT,
         date            TEXT NOT NULL,
         opening_amount  REAL NOT NULL DEFAULT 0,
         closing_amount  REAL NOT NULL DEFAULT 0,
@@ -173,6 +174,7 @@ export async function initializeDatabase(): Promise<void> {
       CREATE TABLE IF NOT EXISTS sync_queue (
         id            TEXT PRIMARY KEY,
         type          TEXT NOT NULL,
+        entity_id     TEXT,
         payload       TEXT NOT NULL,
         status        TEXT NOT NULL DEFAULT 'pending',
         retry_count   INTEGER NOT NULL DEFAULT 0,

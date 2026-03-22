@@ -6,7 +6,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.157.10:3000'; // Cambiar por tu IP local
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.157.10:3000';
 
 // Para encontrar tu IP en Windows ejecuta: ipconfig
 // Busca "Dirección IPv4" en tu adaptador WiFi
@@ -74,6 +74,8 @@ export const authApi = {
     request<any>('/api/auth/logout', { method: 'POST' }),
 
   me: () => request<any>('/api/auth/me'),
+
+  getStaff: () => request<any>('/api/auth/staff'),
 
   updateProfile: (body: { name: string; businessName?: string }) =>
   request<any>('/api/auth/profile', {
@@ -166,4 +168,33 @@ export const salesApi = {
     method: 'POST',
     body:   JSON.stringify(body),
   }),
+};
+
+// Cierres de caja
+export const cashClosingsApi = {
+  create: (body: any) => request<any>('/api/cash-closings', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  }),
+  getAll: () => request<any>('/api/cash-closings'),
+};
+
+// Anulaciones de venta
+export const voidSalesApi = {
+  create: (body: any) => request<any>('/api/void-sales', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  }),
+  getBySale: (saleId: string) => request<any>(`/api/void-sales/sale/${saleId}`),
+};
+
+// Ajustes de inventario
+export const inventoryAdjustmentsApi = {
+  create: (body: any) => request<any>('/api/inventory-adjustments', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  }),
+  getAll: (productId?: string) => request<any>(
+    `/api/inventory-adjustments${productId ? `?productId=${productId}` : ''}`
+  ),
 };

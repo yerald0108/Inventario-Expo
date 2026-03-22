@@ -130,6 +130,7 @@ export const useCashClosingStore = create<CashClosingState>((set, get) => ({
 
     const newClosing: CashClosing = {
       id,
+      serverId:       null,
       date:           today,
       openingAmount,
       closingAmount,
@@ -141,6 +142,7 @@ export const useCashClosingStore = create<CashClosingState>((set, get) => ({
       totalTransfer:  todayStats.totalTransfer,
       salesCount:     todayStats.salesCount,
       note:           note || null,
+      syncStatus:     'pending',
       createdAt:      new Date().toISOString(),
     };
 
@@ -148,7 +150,7 @@ export const useCashClosingStore = create<CashClosingState>((set, get) => ({
     await insertCashClosing(newClosing);
 
     // 2. Encolar sincronización
-    await enqueueOperation('create_sale', id, newClosing);
+    await enqueueOperation('create_cash_closing', id, newClosing);
 
     // 3. Actualizar estado
     set(state => ({

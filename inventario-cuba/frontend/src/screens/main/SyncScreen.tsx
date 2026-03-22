@@ -24,10 +24,13 @@ import { Spacing }       from '../../theme/spacing';
 import type { QueuedOperation as SyncOperation } from '../../lib/syncQueueRepository';
 
 const OPERATION_LABELS: Record<SyncOperation['type'], string> = {
-  create_product: 'Crear producto',
-  update_product: 'Actualizar producto',
-  delete_product: 'Eliminar producto',
-  create_sale:    'Registrar venta',
+  create_product:      'Crear producto',
+  update_product:      'Actualizar producto',
+  delete_product:      'Eliminar producto',
+  create_sale:         'Registrar venta',
+  create_void_sale:    'Anular venta',
+  create_cash_closing: 'Cierre de caja',
+  create_adjustment:   'Ajuste de inventario',
 };
 
 const STATUS_CONFIG = {

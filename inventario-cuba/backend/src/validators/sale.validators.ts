@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createSaleSchema = z.object({
   items: z
     .array(z.object({
-      productId:   z.string().cuid('ID de producto inválido'),
+      productId:   z.string().min(1, 'ID de producto requerido'),
       quantity:    z.number().int().min(1, 'La cantidad mínima es 1'),
       price:       z.number().min(0),
       cost:        z.number().min(0).default(0),

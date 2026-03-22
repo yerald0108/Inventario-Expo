@@ -9,6 +9,7 @@ import type { CashClosing }  from '../types';
 function rowToClosing(row: any): CashClosing {
   return {
     id:             row.id,
+    serverId:       row.server_id ?? null,
     date:           row.date,
     openingAmount:  row.opening_amount,
     closingAmount:  row.closing_amount,
@@ -20,6 +21,7 @@ function rowToClosing(row: any): CashClosing {
     totalTransfer:  row.total_transfer,
     salesCount:     row.sales_count,
     note:           row.note ?? null,
+    syncStatus:     row.sync_status ?? 'pending',
     createdAt:      row.created_at,
   };
 }

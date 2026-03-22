@@ -4,6 +4,7 @@ import {
   registerCashier, getSessions, logoutAllDevices,
   updateProfile, changePassword,
   forgotPassword, resetPassword,
+  getStaff,
 } from '../controllers/auth.controller';
 import { authMiddleware, requireOwner } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimiter';
@@ -21,5 +22,6 @@ router.post('/reset-password',   authLimiter, resetPassword);
 router.post('/register-cashier', authMiddleware, requireOwner, registerCashier);
 router.get('/sessions',          authMiddleware, getSessions);
 router.delete('/sessions',       authMiddleware, logoutAllDevices);
+router.get('/staff', authMiddleware, requireOwner, getStaff);
 
 export default router;

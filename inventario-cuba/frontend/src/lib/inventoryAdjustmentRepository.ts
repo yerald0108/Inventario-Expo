@@ -3,8 +3,9 @@
  * Registra entradas, salidas y correcciones de stock.
  */
 
-import { execSQL, querySQL, withTransaction } from './database';
+import { querySQL, withTransaction } from './database';
 import type { InventoryAdjustment } from '../types';
+import { enqueueOperation } from './syncQueueRepository';
 
 function rowToAdjustment(row: any): InventoryAdjustment {
   return {
@@ -53,6 +54,19 @@ export async function insertAdjustment(
         adjustment.createdAt,
       ]
     );
+
+    await enqueueOperation('create_adjustment', adjustment.id, {
+      productId:     adjustment.productId,
+      productName:   adjustment.productName,
+      type:          adjustment.type,
+      quantity:      adjustment.quantity,
+      previousStock: adjustment.previousStock,
+      newStock:      adjustment.newStock,
+      cost:          adjustment.cost,
+      totalCost:     adjustment.totalCost,
+      reason:        adjustment.reason,
+      note:          adjustment.note,
+    });
 
     await db.runAsync(
       `UPDATE products

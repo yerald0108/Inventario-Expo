@@ -30,6 +30,9 @@ model User {
   products     Product[]
   sales        Sale[]
   cashClosings CashClosing[]
+  voidSales           VoidSale[]
+  inventoryAdjustments InventoryAdjustment[]
+  resetTokens  PasswordResetToken[]
 
    sessions     UserSession[]
 
@@ -56,6 +59,7 @@ model Product {
   userId    String     @map("user_id")
   user      User       @relation(fields: [userId], references: [id])
   saleItems SaleItem[]
+  adjustments  InventoryAdjustment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -77,6 +81,7 @@ model Sale {
   cashierId String @map("cashier_id")
   cashier   User   @relation(fields: [cashierId], references: [id])
   items     SaleItem[]
+  voidSales    VoidSale[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -107,23 +112,21 @@ model SaleItem {
 }
 
 model CashClosing {
-  id             String @id @default(cuid())
+  id             String   @id @default(cuid())
   date           String
-  openingAmount  Float  @default(0) @map("opening_amount")
-  closingAmount  Float  @default(0) @map("closing_amount")
-  expectedAmount Float  @default(0) @map("expected_amount")
-  difference     Float  @default(0)
-  totalSales     Float  @default(0) @map("total_sales")
-  totalCash      Float  @default(0) @map("total_cash")
-  totalCard      Float  @default(0) @map("total_card")
-  totalTransfer  Float  @default(0) @map("total_transfer")
-  salesCount     Int    @default(0) @map("sales_count")
+  openingAmount  Float    @default(0) @map("opening_amount")
+  closingAmount  Float    @default(0) @map("closing_amount")
+  expectedAmount Float    @default(0) @map("expected_amount")
+  difference     Float    @default(0)
+  totalSales     Float    @default(0) @map("total_sales")
+  totalCash      Float    @default(0) @map("total_cash")
+  totalCard      Float    @default(0) @map("total_card")
+  totalTransfer  Float    @default(0) @map("total_transfer")
+  salesCount     Int      @default(0) @map("sales_count")
   note           String?
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id])
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([date])
@@ -145,4 +148,71 @@ model UserSession {
   @@index([userId])
   @@index([tokenHash])
   @@map("user_sessions")
+}
+
+model VoidSale {
+  id          String        @id @default(cuid())
+  saleId      String        @map("sale_id")
+  sale        Sale          @relation(fields: [saleId], references: [id])
+  reason      String
+  totalVoided Float         @default(0) @map("total_voided")
+  items       VoidSaleItem[]
+  cashierId   String        @map("cashier_id")
+  cashier     User          @relation(fields: [cashierId], references: [id])
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@index([saleId])
+  @@map("void_sales")
+}
+
+model VoidSaleItem {
+  id          String   @id @default(cuid())
+  voidSaleId  String   @map("void_sale_id")
+  voidSale    VoidSale @relation(fields: [voidSaleId], references: [id], onDelete: Cascade)
+  saleItemId  String   @map("sale_item_id")
+  productId   String   @map("product_id")
+  productName String   @map("product_name")
+  quantity    Int      @default(1)
+  price       Float
+  subtotal    Float
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([voidSaleId])
+  @@map("void_sale_items")
+}
+
+model InventoryAdjustment {
+  id            String   @id @default(cuid())
+  productId     String   @map("product_id")
+  product       Product  @relation(fields: [productId], references: [id])
+  productName   String   @map("product_name")
+  type          String
+  quantity      Int
+  previousStock Int      @map("previous_stock")
+  newStock      Int      @map("new_stock")
+  cost          Float?
+  totalCost     Float?   @map("total_cost")
+  reason        String
+  note          String?
+  cashierId     String   @map("cashier_id")
+  cashier       User     @relation(fields: [cashierId], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([productId])
+  @@index([cashierId])
+  @@map("inventory_adjustments")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String   @map("code_hash")
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([codeHash])
+  @@map("password_reset_tokens")
 }
