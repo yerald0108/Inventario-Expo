@@ -36,6 +36,7 @@ import type { AppTheme }   from '../../theme/paperTheme';
 import { Spacing }         from '../../theme/spacing';
 import { useHaptics } from '../../hooks/useHaptics';
 import { productsApi } from '../../services/api';
+import { useNetwork } from '../../hooks/useNetwork';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -57,6 +58,7 @@ export function POSScreen() {
   const theme  = useTheme<AppTheme>();
   const insets = useSafeAreaInsets();
   const haptics = useHaptics();
+  const network = useNetwork();
 
   const { products, loadProducts, getFilteredProducts, setSearchQuery } = useProductStore();
   const {

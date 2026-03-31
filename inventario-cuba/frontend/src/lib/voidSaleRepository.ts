@@ -6,6 +6,7 @@
 import { querySQL, withTransaction } from './database';
 import type { VoidSale, VoidSaleItem } from '../types';
 import { enqueueOperation } from './syncQueueRepository';
+import { generateId } from './generateId';
 
 function rowToVoidSaleItem(row: any): VoidSaleItem {
   return {
@@ -63,7 +64,7 @@ export async function insertVoidSale(
           product_name, quantity, price, subtotal
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          'vi_' + Date.now().toString(36) + Math.random().toString(36).slice(2),
+          generateId('vi'),
           voidSale.id,
           item.saleItemId,
           item.productId,

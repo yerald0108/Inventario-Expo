@@ -4,6 +4,7 @@
  */
 
 import { execSQL, querySQL, querySQLOne } from './database';
+import { generateId } from './generateId';
 
 export type QueuedOperation = {
   id:           string;
@@ -29,7 +30,7 @@ export async function enqueueOperation(
   entityId: string,
   payload:  object
 ): Promise<string> {
-  const id        = 'op_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const id        = generateId('op');
   const createdAt = new Date().toISOString();
 
   await execSQL(

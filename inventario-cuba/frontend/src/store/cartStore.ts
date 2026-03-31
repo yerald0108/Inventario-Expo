@@ -10,10 +10,7 @@ import { insertSaleWithItems, markSaleSynced } from '../lib/saleRepository';
 import { decrementStock }                       from '../lib/productRepository';
 import { enqueueOperation }                     from '../lib/syncQueueRepository';
 import type { CartItem, Product } from '../types';
-
-function generateId(): string {
-  return 'sale_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+import { generateId } from '../lib/generateId';
 
 interface CartState {
   items:         CartItem[];
@@ -117,7 +114,7 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     set({ isProcessing: true, error: null });
 
-    const saleId   = generateId();
+    const saleId   = generateId('sale');
     const now      = new Date().toISOString();
     const subtotal = items.reduce(
       (sum, i) => sum + i.product.price * i.quantity, 0
@@ -125,7 +122,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     const total = Math.max(0, subtotal - discount);
 
     const saleItems = items.map(item => ({
-      id:          'item_' + Date.now().toString(36) + Math.random().toString(36).slice(2),
+      id:          generateId('item'),
       productId:   item.product.id,
       productName: item.product.name,
       price:       item.product.price,

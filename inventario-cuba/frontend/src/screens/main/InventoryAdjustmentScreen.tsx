@@ -29,6 +29,7 @@ import type {
   SettingsStackParamList,
   InventoryAdjustment,
 } from '../../types';
+import { generateId } from '../../lib/generateId';
 
 type Props = NativeStackScreenProps<SettingsStackParamList, 'InventoryAdjustment'>;
 
@@ -86,10 +87,6 @@ const REASONS: Record<AdjustmentType, string[]> = {
     'Otro',
   ],
 };
-
-function generateId(): string {
-  return 'adj_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
 
 export function InventoryAdjustmentScreen({ navigation, route }: Props) {
   const theme  = useTheme<AppTheme>();
@@ -164,7 +161,7 @@ export function InventoryAdjustmentScreen({ navigation, route }: Props) {
             setIsSaving(true);
             try {
               const adjustment: InventoryAdjustment = {
-                id:            generateId(),
+                id:            generateId('adj'),
                 productId:     selectedProduct.id,
                 productName:   selectedProduct.name,
                 type,

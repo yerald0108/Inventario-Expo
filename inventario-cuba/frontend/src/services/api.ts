@@ -6,7 +6,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.157.10:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.137.1:3000';
 
 // Para encontrar tu IP en Windows ejecuta: ipconfig
 // Busca "Dirección IPv4" en tu adaptador WiFi

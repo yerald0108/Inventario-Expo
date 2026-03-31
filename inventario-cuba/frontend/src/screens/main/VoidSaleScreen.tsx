@@ -34,6 +34,7 @@ import type {
   SalesStackParamList,
   VoidSaleItem,
 } from '../../types';
+import { generateId } from '../../lib/generateId';
 
 type Props = NativeStackScreenProps<SalesStackParamList, 'VoidSale'>;
 
@@ -141,7 +142,7 @@ export function VoidSaleScreen({ navigation, route }: Props) {
                 })) ?? [];
 
               const voidSale = {
-                id:          'void_' + Date.now().toString(36) + Math.random().toString(36).slice(2),
+                id:          generateId('void'),
                 saleId:      sale.id,
                 reason:      finalReason,
                 items:       voidItems,

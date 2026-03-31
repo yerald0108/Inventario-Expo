@@ -12,10 +12,7 @@ import {
 import { enqueueOperation } from '../lib/syncQueueRepository';
 import { getTodaySummary }  from '../lib/saleRepository';
 import type { CashClosing } from '../types';
-
-function generateId(): string {
-  return 'closing_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+import { generateId } from '../lib/generateId';
 
 interface CashClosingState {
   closings:      CashClosing[];
@@ -126,7 +123,7 @@ export const useCashClosingStore = create<CashClosingState>((set, get) => ({
 
     const difference = closingAmount - todayStats.expectedAmount;
     const today      = new Date().toISOString().split('T')[0];
-    const id         = generateId();
+    const id         = generateId('closing');
 
     const newClosing: CashClosing = {
       id,

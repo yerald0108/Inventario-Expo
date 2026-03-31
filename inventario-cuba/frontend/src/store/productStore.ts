@@ -18,10 +18,7 @@ import {
 } from '../lib/productRepository';
 import { enqueueOperation } from '../lib/syncQueueRepository';
 import type { Product } from '../types';
-
-function generateId(): string {
-  return 'local_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+import { generateId } from '../lib/generateId';
 
 interface ProductState {
   products:         Product[];
@@ -122,7 +119,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
    */
   createProduct: async (data: CreateProductData): Promise<Product> => {
     const now     = new Date().toISOString();
-    const localId = generateId();
+    const localId = generateId('local');
 
     const newProduct: Product = {
       id:          localId,
