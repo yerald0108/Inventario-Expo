@@ -36,8 +36,8 @@ export async function createSession(params: {
 }
 
 /**
- * Verifica si una sesión es válida (existe, está activa y no expiró).
- * También actualiza lastUsedAt para tracking de actividad.
+ * Verifica si una sesión es válida.
+ * Expira si no se usa en 48 horas (inactividad).
  */
 export async function validateSession(token: string): Promise<boolean> {
   const tokenHash = hashToken(token);
@@ -50,7 +50,19 @@ export async function validateSession(token: string): Promise<boolean> {
     return false;
   }
 
-  // Actualizar última actividad sin bloquear la respuesta
+  // Verificar inactividad — si no se usó en 48 horas, invalidar
+  const inactivityLimit = new Date();
+  inactivityLimit.setHours(inactivityLimit.getHours() - 48);
+
+  if (session.lastUsedAt < inactivityLimit) {
+    await prisma.userSession.update({
+      where: { tokenHash },
+      data:  { isActive: false },
+    });
+    return false;
+  }
+
+  // Actualizar última actividad
   prisma.userSession.update({
     where: { tokenHash },
     data:  { lastUsedAt: new Date() },

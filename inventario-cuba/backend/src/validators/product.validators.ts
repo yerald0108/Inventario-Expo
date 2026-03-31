@@ -27,15 +27,22 @@ export const createProductSchema = z.object({
     .string()
     .min(1, 'La categoría es requerida')
     .default('general'),
-  barcode: z.string().optional(),
-  unit: z.string().default('unidad'),
+  barcode: z
+    .string()
+    .regex(
+      /^[0-9A-Za-z\-]{4,30}$/,
+      'Código inválido. Solo letras, números y guiones (4-30 caracteres)'
+    )
+    .optional(),
+  unit:     z.string().default('unidad'),
   imageUri: z.string().url().optional(),
 });
 
 export const updateProductSchema = createProductSchema.partial();
 
+// Fix: usar z.string().min(1) en lugar de cuid() para IDs locales
 export const productIdSchema = z.object({
-  id: z.string().cuid('ID de producto inválido'),
+  id: z.string().min(1, 'ID de producto requerido'),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;

@@ -62,7 +62,11 @@ const productSchema = z.object({
   stock:       z.string().min(1, 'El stock es requerido'),
   minStock:    z.string().optional().or(z.literal('')),
   category:    z.string().min(1, 'La categoría es requerida'),
-  barcode:     z.string().optional().or(z.literal('')),
+  barcode:     z.
+    string().
+    optional().
+    refine(val => !val || /^[0-9A-Za-z\-]{4,30}$/.
+    test(val),{ message: 'Código inválido. Solo letras, números y guiones (4-30 caracteres)' }),
   unit:        z.string().min(1, 'La unidad es requerida'),
 });
 

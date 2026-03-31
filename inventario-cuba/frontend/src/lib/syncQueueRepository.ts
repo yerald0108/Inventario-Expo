@@ -33,11 +33,10 @@ export async function enqueueOperation(
   const createdAt = new Date().toISOString();
 
   await execSQL(
-    `INSERT INTO sync_queue (id, type, entity_id, payload, status, retry_count, created_at)
-     VALUES (?, ?, ?, ?, 'pending', 0, ?)`,
-    [id, type, entityId, JSON.stringify(payload), createdAt]
+    `INSERT INTO sync_queue (id, type, entity_id, payload, status, retry_count, created_at, updated_at)
+    VALUES (?, ?, ?, ?, 'pending', 0, ?, ?)`,
+    [id, type, entityId, JSON.stringify(payload), createdAt, createdAt]
   );
-
   return id;
 }
 
@@ -45,8 +44,8 @@ export async function enqueueOperation(
 export async function getPendingOperations(): Promise<QueuedOperation[]> {
   const rows = await querySQL(
     `SELECT * FROM sync_queue
-     WHERE status IN ('pending', 'error') AND retry_count < 3
-     ORDER BY created_at ASC`
+    WHERE status IN ('pending', 'error') AND retry_count < 3
+    ORDER BY created_at ASC, updated_at ASC`
   );
   return rows.map(rowToOperation);
 }
@@ -78,9 +77,10 @@ export async function markOperationFailed(
 ): Promise<void> {
   await execSQL(
     `UPDATE sync_queue
-     SET status = 'error', retry_count = retry_count + 1, error_message = ?
-     WHERE id = ?`,
-    [errorMessage, id]
+    SET status = 'error', retry_count = retry_count + 1,
+       error_message = ?, updated_at = ?
+    WHERE id = ?`,
+    [errorMessage, new Date().toISOString(), id]
   );
 }
 

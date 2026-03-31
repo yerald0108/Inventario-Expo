@@ -34,7 +34,7 @@ model User {
   inventoryAdjustments InventoryAdjustment[]
   resetTokens  PasswordResetToken[]
 
-   sessions     UserSession[]
+  sessions     UserSession[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

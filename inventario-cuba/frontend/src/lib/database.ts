@@ -179,8 +179,8 @@ export async function initializeDatabase(): Promise<void> {
         status        TEXT NOT NULL DEFAULT 'pending',
         retry_count   INTEGER NOT NULL DEFAULT 0,
         error_message TEXT,
-        created_at    TEXT NOT NULL,
-        updated_at    TEXT NOT NULL
+        created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `);
 

@@ -195,3 +195,30 @@ export async function getCategories(
     data: categories.map(c => c.category),
   });
 }
+
+/**
+ * GET /api/products/barcode/:barcode
+ * Busca un producto por su código de barras.
+ */
+export async function getProductByBarcode(
+  req: AuthRequest,
+  res: Response<ApiResponse>
+): Promise<void> {
+  const product = await prisma.product.findFirst({
+    where: {
+      barcode:  req.params.barcode,
+      userId:   req.user!.id,
+      isActive: true,
+    },
+  });
+
+  if (!product) {
+    res.status(404).json({
+      success: false,
+      error:   'Producto no encontrado con ese código de barras.',
+    });
+    return;
+  }
+
+  res.json({ success: true, data: product });
+}

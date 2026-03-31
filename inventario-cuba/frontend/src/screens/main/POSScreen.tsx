@@ -35,6 +35,7 @@ import { BarcodeScannerModal } from '../../components/BarcodeScanner';
 import type { AppTheme }   from '../../theme/paperTheme';
 import { Spacing }         from '../../theme/spacing';
 import { useHaptics } from '../../hooks/useHaptics';
+import { productsApi } from '../../services/api';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -114,16 +115,50 @@ export function POSScreen() {
     haptics.medium();
   }, [addItem]);
 
-  const handleBarcodeScanned = useCallback((barcode: string) => {
-    setShowScanner(false);
-    // Buscar producto por código de barras
-    const product = filteredProducts.find(p => p.barcode === barcode);
-    if (product) {
-      handleAddItem(product);
-    } else {
-      setSnackbar(`No se encontró producto con código: ${barcode}`);
+  const handleBarcodeScanned = useCallback(async (barcode: string) => {
+  setShowScanner(false);
+
+  // 1. Buscar primero en memoria local (más rápido)
+  const localProduct = filteredProducts.find(p => p.barcode === barcode);
+  if (localProduct) {
+    handleAddItem(localProduct);
+    return;
+  }
+
+  // 2. Si no está localmente, consultar al servidor
+  if (network.isOnline) {
+    try {
+      const response = await productsApi.getByBarcode(barcode);
+      const serverProduct = response.data;
+      if (serverProduct) {
+        // Agregar al carrito con datos del servidor
+        handleAddItem({
+          id:          serverProduct.id,
+          serverId:    serverProduct.id,
+          name:        serverProduct.name,
+          price:       serverProduct.price,
+          cost:        serverProduct.cost,
+          stock:       serverProduct.stock,
+          minStock:    serverProduct.minStock ?? serverProduct.min_stock ?? 2,
+          category:    serverProduct.category,
+          barcode:     serverProduct.barcode,
+          unit:        serverProduct.unit,
+          isActive:    true,
+          imageUri:    serverProduct.imageUri ?? serverProduct.image_uri ?? null,
+          description: serverProduct.description ?? null,
+          syncStatus:  'synced',
+          createdAt:   serverProduct.createdAt ?? serverProduct.created_at,
+          updatedAt:   serverProduct.updatedAt ?? serverProduct.updated_at,
+        });
+        return;
+      }
+    } catch {
+      // Si falla el servidor, mostrar aviso normal
     }
-  }, [filteredProducts, handleAddItem]);
+  }
+
+  setSnackbar(`No se encontró producto con código: ${barcode}`);
+}, [filteredProducts, handleAddItem, network.isOnline]);
 
   const handleProcessSale = async () => {
     try {

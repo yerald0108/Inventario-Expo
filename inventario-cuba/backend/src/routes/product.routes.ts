@@ -6,19 +6,19 @@ import {
   updateProduct,
   deleteProduct,
   getCategories,
+  getProductByBarcode,
 } from '../controllers/product.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Todas las rutas de productos requieren autenticación
 router.use(authMiddleware);
-
-router.get('/',            getProducts);
-router.get('/categories',  getCategories);
-router.get('/:id',         getProductById);
-router.post('/',           createProduct);
-router.patch('/:id',       updateProduct);
-router.delete('/:id',      deleteProduct);
+router.get('/',                    getProducts);
+router.get('/categories',          getCategories);
+router.get('/barcode/:barcode',    getProductByBarcode);
+router.get('/:id',                 getProductById);
+router.post('/',                   createProduct);
+router.patch('/:id',               updateProduct);
+router.delete('/:id',              deleteProduct);
 
 export default router;

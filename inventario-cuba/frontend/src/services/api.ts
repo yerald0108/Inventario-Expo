@@ -129,6 +129,8 @@ export const productsApi = {
 
   getById:    (id: string) => request<any>(`/api/products/${id}`),
   getCategories: ()        => request<any>('/api/products/categories'),
+  getByBarcode: (barcode: string) =>
+  request<any>(`/api/products/barcode/${encodeURIComponent(barcode)}`),
 
   create: (body: any) => request<any>('/api/products', {
     method: 'POST',
